@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Person Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: url('/static/compare-bg.jpg') center center/cover no-repeat fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 24, 48, 0.86);
+            z-index: 0;
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+
+        .panel,
+        .card-soft {
+            background: rgba(10, 24, 48, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.4rem;
+        }
+
+        .panel {
+            padding: 1.5rem;
+            color: #fff;
+        }
+
+        .card-soft {
+            padding: 1rem;
+            color: #fff;
+            height: 100%;
+        }
+
+        .btn-outline-light,
+        .btn-primary {
+            border-radius: 0.85rem;
+            font-weight: 700;
+        }
+
+        .badge-soft {
+            background: rgba(0, 230, 230, 0.12);
+            color: #8cf7f7;
+            border: 1px solid rgba(0, 230, 230, 0.16);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 0.85rem;
+        }
+
+        .text-muted-light {
+            color: rgba(255, 255, 255, 0.72) !important;
+        }
+
+        .item-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell container-fluid">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 panel">
+            <div>
+                <div class="badge badge-soft mb-2">Person Details</div>
+                <h1 class="h3 fw-bold mb-1">{{ person.name }}</h1>
+                <div class="text-muted-light">ID {{ person.id }} | {{ person.photo_count }} faces | {{ person.fingerprint_count }} fingerprints</div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/persons" class="btn btn-outline-light">Back to Persons</a>
+                <a href="/dashboard" class="btn btn-outline-light">Dashboard</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card-soft">
+                    <h2 class="h5 fw-bold mb-3">Update person</h2>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <form method="post" action="/person/{{ person.id }}/update" enctype="multipart/form-data" class="d-grid gap-3">
+                        <div>
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" value="{{ person.name }}">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" value="{{ person.age or '' }}">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Gender</label>
+                                <input type="text" class="form-control" name="gender" value="{{ person.gender or '' }}">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" name="address" value="{{ person.address or '' }}">
+                        </div>
+                        <div>
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3">{{ person.notes or '' }}</textarea>
+                        </div>
+                        <div>
+                            <label class="form-label">Add more face images</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" multiple>
+                        </div>
+                        <div>
+                            <label class="form-label">Add more fingerprint images</label>
+                            <input type="file" class="form-control" name="fingerprint" accept="image/*" multiple>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Person</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card-soft h-100">
+                            <h2 class="h5 fw-bold mb-3">Face images</h2>
+                            <div class="item-list">
+                                {% for photo in person.photos %}
+                                    <div class="item-card">
+                                        <div class="fw-bold">Photo #{{ photo.id }}</div>
+                                        <div class="text-muted-light small text-break">{{ photo.path }}</div>
+                                    </div>
+                                {% endfor %}
+                                {% if not person.photos %}
+                                    <div class="text-muted-light">No face images stored yet.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-soft h-100">
+                            <h2 class="h5 fw-bold mb-3">Fingerprint templates</h2>
+                            <div class="item-list">
+                                {% for fingerprint in person.fingerprints %}
+                                    <div class="item-card">
+                                        <div class="fw-bold">Fingerprint #{{ fingerprint.id }}</div>
+                                        <div class="text-muted-light small">Stored at {{ fingerprint.created_at }}</div>
+                                    </div>
+                                {% endfor %}
+                                {% if not person.fingerprints %}
+                                    <div class="text-muted-light">No fingerprint templates stored yet.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

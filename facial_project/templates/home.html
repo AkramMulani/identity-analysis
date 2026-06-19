@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Recognition Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at top left, rgba(0, 230, 230, 0.12), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(33, 136, 56, 0.14), transparent 28%),
+                rgba(10, 24, 48, 0.82);
+            z-index: 0;
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+
+        .hero-panel,
+        .workspace-panel,
+        .metric-card,
+        .action-card {
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .hero-panel {
+            border-radius: 1.8rem;
+            padding: 2rem;
+            color: #fff;
+            animation: fadeInUp 1.1s cubic-bezier(.39,.575,.565,1) both;
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.42rem 0.85rem;
+            border-radius: 999px;
+            background: rgba(0, 230, 230, 0.12);
+            color: #ccffff;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-size: 0.74rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            margin: 0;
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            font-size: clamp(2.2rem, 5vw, 4.2rem);
+            line-height: 0.98;
+            letter-spacing: -0.03em;
+            font-weight: 800;
+        }
+
+        .hero-copy {
+            max-width: 42rem;
+            margin: 1.1rem 0 0;
+            color: rgba(255, 255, 255, 0.84);
+            line-height: 1.75;
+            font-size: 1.04rem;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .hero-badge {
+            padding: 0.55rem 0.85rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .workspace-panel {
+            border-radius: 1.8rem;
+            padding: 1.25rem;
+            animation: fadeInUp 1.25s cubic-bezier(.39,.575,.565,1) both;
+        }
+
+        .workspace-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .workspace-top h2 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .workspace-top .status {
+            color: rgba(255, 255, 255, 0.74);
+            font-size: 0.92rem;
+        }
+
+        .forensics-icon {
+            display: block;
+            width: 108px;
+            height: 108px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow:
+                0 0 0 8px rgba(0, 230, 230, 0.16),
+                0 0 34px 8px rgba(0, 230, 230, 0.50),
+                0 8px 32px rgba(10, 24, 48, 0.56),
+                0 0 0 2px rgba(255, 255, 255, 0.96) inset;
+            animation: pulse 2.6s infinite;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .forensics-icon:hover {
+            transform: scale(1.06) rotate(-2deg);
+            box-shadow:
+                0 0 0 10px rgba(0, 230, 230, 0.20),
+                0 0 42px 10px rgba(0, 230, 230, 0.60),
+                0 12px 38px rgba(10, 24, 48, 0.64),
+                0 0 0 2px rgba(255, 255, 255, 0.96) inset;
+        }
+
+        .metric-card {
+            border-radius: 1.2rem;
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .metric-label {
+            color: rgba(255, 255, 255, 0.65);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .metric-value {
+            margin-top: 0.35rem;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-card {
+            display: block;
+            height: 100%;
+            border-radius: 1.4rem;
+            padding: 1.2rem;
+            text-decoration: none;
+            color: #fff;
+            transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            inset: auto -20% -35% auto;
+            width: 8rem;
+            height: 8rem;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 68%);
+            pointer-events: none;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.28);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
+        }
+
+        .action-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 0.9rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .action-card h3 {
+            margin: 0 0 0.35rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .action-card p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.76);
+            line-height: 1.55;
+            font-size: 0.95rem;
+        }
+
+        .action-meta {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .action-face {
+            border-left: 3px solid rgba(0, 230, 230, 0.6);
+        }
+
+        .action-face .action-icon {
+            color: #00e6e6;
+        }
+
+        .action-thumb {
+            border-left: 3px solid rgba(67, 192, 109, 0.6);
+        }
+
+        .action-thumb .action-icon {
+            color: #7cf6c5;
+        }
+
+        .footer-note {
+            margin-top: 1rem;
+            color: rgba(255, 255, 255, 0.64);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.84; }
+            50% { transform: scale(1.06); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.84; }
+        }
+
+        @media (max-width: 991.98px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .hero-panel,
+            .workspace-panel {
+                border-radius: 1.3rem;
+            }
+
+            .hero-panel,
+            .workspace-panel {
+                padding: 1.1rem;
+            }
+
+            .workspace-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell container-fluid">
+        <div class="row align-items-center min-vh-100 g-4">
+            <div class="col-lg-6 px-3 px-lg-4 py-4 py-lg-0">
+                <div class="hero-panel">
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <img src="{{ url_for('static', filename='face-id.png') }}" alt="Forensics Face" class="forensics-icon">
+                        <div>
+                            <div class="hero-kicker">Forensic identity hub</div>
+                            <h1 class="hero-title">Administrative dashboard entry point.</h1>
+                        </div>
+                    </div>
+
+                    <p class="hero-copy">
+                        Admin users sign in through the dashboard, while verification workflows remain available as the public review surface.
+                    </p>
+
+                    <div class="hero-badges">
+                        <span class="hero-badge">Admin login</span>
+                        <span class="hero-badge">Dashboard</span>
+                        <span class="hero-badge">Person management</span>
+                        <span class="hero-badge">Identity review</span>
+                    </div>
+
+                    <div class="row g-3 mt-4">
+                        <div class="col-sm-4">
+                            <div class="metric-card">
+                                <div class="metric-label">Access</div>
+                                <div class="metric-value">Controlled</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="metric-card">
+                                <div class="metric-label">Primary role</div>
+                                <div class="metric-value">Admin</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="metric-card">
+                                <div class="metric-label">Public mode</div>
+                                <div class="metric-value">Compare</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 px-3 px-lg-4 py-4 py-lg-0">
+                <div class="workspace-panel">
+                    <div class="workspace-top">
+                        <div>
+                            <h2>Choose an entry point</h2>
+                            <div class="status">Use the admin dashboard or jump to public verification.</div>
+                        </div>
+                        <div class="status">Workflow hub</div>
+                    </div>
+
+                    <div class="action-grid">
+                        <a href="/login" class="action-card action-face">
+                            <div class="action-icon">A</div>
+                            <h3>Admin Login</h3>
+                            <p>Enter the secured dashboard for person management and record maintenance.</p>
+                            <span class="action-meta">Dashboard access</span>
+                        </a>
+
+                        <a href="/admin/register" class="action-card action-face">
+                            <div class="action-icon">R</div>
+                            <h3>Admin Registration</h3>
+                            <p>Create the first admin account or add another operator with dashboard access.</p>
+                            <span class="action-meta">Create admin</span>
+                        </a>
+
+                        <a href="/compare" class="action-card action-thumb">
+                            <div class="action-icon">V</div>
+                            <h3>Face Verification</h3>
+                            <p>Use the public comparison surface for identity review without person management access.</p>
+                            <span class="action-meta">Verify face</span>
+                        </a>
+
+                        <a href="/compare_thumb" class="action-card action-thumb">
+                            <div class="action-icon">P</div>
+                            <h3>Fingerprint Verification</h3>
+                            <p>Use the public fingerprint review flow when you are not managing person records.</p>
+                            <span class="action-meta">Verify thumb</span>
+                        </a>
+                    </div>
+
+                    <div class="footer-note">
+                        Administrative access now drives person management; verification remains a separate public entry point.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

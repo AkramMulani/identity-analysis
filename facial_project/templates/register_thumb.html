@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumb Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background: #07111f;
+        }
+        body {
+            position: relative;
+            overflow-x: hidden;
+            background: url("{{ url_for('static', filename='compare-bg2.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(0, 230, 230, 0.14), transparent 32%),
+                        linear-gradient(135deg, rgba(7, 17, 31, 0.88), rgba(10, 24, 48, 0.92));
+            z-index: 0;
+        }
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+        .hero-panel {
+            background: rgba(10, 24, 48, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(10px);
+            padding: 2.25rem;
+            color: #e0eafc;
+            animation: fadeInLeft 0.9s cubic-bezier(.39,.575,.565,1) both;
+        }
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(0, 230, 230, 0.12);
+            color: #8cf7f7;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero-panel h1 {
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        .hero-panel p {
+            color: rgba(224, 234, 252, 0.86);
+            line-height: 1.7;
+            max-width: 38rem;
+            margin-bottom: 0;
+        }
+        .workflow-card {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            animation: fadeInUp 1s cubic-bezier(.39,.575,.565,1) both;
+        }
+        .workflow-card-header {
+            padding: 1.5rem 1.5rem 0;
+        }
+        .thumb-mark {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 1rem;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(0, 230, 230, 0.8));
+            color: #0a1830;
+            font-size: 2rem;
+            font-weight: 800;
+            box-shadow: 0 0 0 8px rgba(0, 230, 230, 0.14), 0 0 32px rgba(0, 230, 230, 0.5);
+            animation: pulse 2.4s infinite;
+        }
+        .workflow-card h2 {
+            color: #ffffff;
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.5rem;
+        }
+        .workflow-card .subtitle {
+            color: rgba(224, 234, 252, 0.8);
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            color: #e0eafc;
+            font-weight: 600;
+            margin-bottom: 0.45rem;
+        }
+        .form-control {
+            background: rgba(10, 24, 48, 0.28);
+            border: 1px solid rgba(0, 230, 230, 0.45);
+            color: #ffffff;
+            border-radius: 0.8rem;
+            padding: 0.8rem 1rem;
+            box-shadow: none;
+        }
+        .form-control::placeholder {
+            color: rgba(224, 234, 252, 0.6);
+        }
+        .form-control:focus {
+            background: rgba(10, 24, 48, 0.38);
+            color: #ffffff;
+            border-color: #00e6e6;
+            box-shadow: 0 0 0 0.22rem rgba(0, 230, 230, 0.18);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #0077b6 0%, #00a8cc 100%);
+            border: none;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            border-radius: 0.8rem;
+            padding: 0.85rem 1rem;
+            box-shadow: 0 10px 24px rgba(0, 119, 182, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-primary:hover,
+        .btn-primary:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(0, 119, 182, 0.36);
+        }
+        .btn-outline-light {
+            border-radius: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        #thumbResult {
+            min-height: 1.5rem;
+            color: #e0eafc;
+        }
+        #thumbLoading {
+            color: #e0eafc;
+        }
+        .thumb-alert {
+            border-radius: 1rem;
+            padding: 0.9rem 1rem;
+            background: rgba(7, 17, 31, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e0eafc;
+        }
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #d7fdfd;
+            font-size: 0.92rem;
+        }
+        .status-dot {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 50%;
+            background: #00e6e6;
+            box-shadow: 0 0 14px #00e6e6;
+        }
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-28px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @media (max-width: 767.98px) {
+            .hero-panel,
+            .workflow-card {
+                border-radius: 1.2rem;
+            }
+            .hero-panel {
+                padding: 1.5rem;
+            }
+            .workflow-card-header,
+            .workflow-card .card-body {
+                padding-left: 1.1rem !important;
+                padding-right: 1.1rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell container-fluid px-0">
+        <div class="row g-0 align-items-center min-vh-100">
+            <div class="col-lg-6 px-3 px-md-5 py-5">
+                <div class="hero-panel">
+                    <div class="hero-kicker">Thumb Registration Flow</div>
+                    <h1>Enroll a thumb impression with the same forensic style.</h1>
+                    <p>
+                        Register the person ID, capture the thumb impression from the scanner, and store the biometric record in a secure workflow that matches the rest of the application.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-6 px-3 px-md-5 pb-5 pb-lg-0">
+                <div class="workflow-card mx-auto" style="max-width: 520px;">
+                    <div class="workflow-card-header text-center">
+                        <div class="thumb-mark">T</div>
+                        <h2>Thumb Registration</h2>
+                        <div class="subtitle">Capture and store fingerprint data for an existing person profile.</div>
+                    </div>
+                    <div class="card-body px-4 px-md-5 pb-4 pt-0">
+                        <form id="thumbForm" class="d-grid gap-3">
+                            <div>
+                                <label for="thumbPersonId" class="form-label">Person ID</label>
+                                <input type="text" class="form-control" id="thumbPersonId" name="person_id" placeholder="Enter registered person ID" autocomplete="off">
+                            </div>
+                            <div>
+                                <label for="thumbFingerprint" class="form-label">Fingerprint image</label>
+                                <input type="file" class="form-control" id="thumbFingerprint" name="fingerprint" accept="image/*">
+                            </div>
+                            <div class="status-chip">
+                                <span class="status-dot"></span>
+                                Ready to enroll the fingerprint template
+                            </div>
+                            <button type="submit" class="btn btn-primary">Enroll Thumb</button>
+                        </form>
+                        <div id="thumbResult" class="mt-4 text-center"></div>
+                        <div id="thumbLoading" class="text-center mt-3" style="display:none;">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">Capturing thumb, please wait...</div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <a href="/" class="btn btn-outline-light">Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const thumbForm = document.getElementById('thumbForm');
+
+    async function captureFingerprint() {
+        const result = document.getElementById('thumbResult');
+        const loading = document.getElementById('thumbLoading');
+        const personIdField = document.getElementById('thumbPersonId');
+        const fingerprintField = document.getElementById('thumbFingerprint');
+        const personId = personIdField.value.trim();
+        const fingerprintFile = fingerprintField.files[0];
+
+        result.innerHTML = '';
+
+        if (!personId) {
+            result.innerHTML = '<div class="text-warning fw-semibold">Enter a person ID before starting thumb enrollment.</div>';
+            return;
+        }
+
+        if (!fingerprintFile) {
+            result.innerHTML = '<div class="text-warning fw-semibold">Choose a fingerprint image to enroll.</div>';
+            return;
+        }
+
+        loading.style.display = 'block';
+
+        const formData = new FormData();
+        formData.append('person_id', personId);
+        formData.append('fingerprint', fingerprintFile);
+
+        try {
+            const response = await fetch('/add_fingerprint', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok || data.status === 'error') {
+                result.innerHTML = `<div class="thumb-alert text-danger fw-semibold">${data.message || 'Unable to enroll fingerprint.'}</div>`;
+                return;
+            }
+
+            result.innerHTML = `
+                <div class="thumb-alert text-success fw-semibold">${data.message || 'Fingerprint enrolled successfully.'}</div>
+                <div class="thumb-alert mt-3 text-start">
+                    <div class="fw-semibold mb-2">Stored person data</div>
+                    <div><span class="text-info">Person ID:</span> ${data.person?.id ?? personId}</div>
+                    <div><span class="text-info">Name:</span> ${data.person?.name || 'N/A'}</div>
+                    <div><span class="text-info">Age:</span> ${data.person?.age ?? 'N/A'}</div>
+                    <div><span class="text-info">Gender:</span> ${data.person?.gender || 'N/A'}</div>
+                    <div><span class="text-info">Address:</span> ${data.person?.address || 'N/A'}</div>
+                </div>
+            `;
+            thumbForm.reset();
+        } catch (error) {
+            result.innerHTML = '<div class="thumb-alert text-danger fw-semibold">Error enrolling fingerprint.</div>';
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    thumbForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        captureFingerprint();
+    });
+    </script>
+</body>
+</html>

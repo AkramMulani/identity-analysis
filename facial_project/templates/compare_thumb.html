@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumb Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background: #07111f;
+        }
+        body {
+            position: relative;
+            overflow-x: hidden;
+            background: url("{{ url_for('static', filename='compare-bg.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(0, 230, 230, 0.16), transparent 30%),
+                        linear-gradient(135deg, rgba(7, 17, 31, 0.9), rgba(10, 24, 48, 0.94));
+            z-index: 0;
+        }
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+        .hero-panel {
+            background: rgba(10, 24, 48, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(10px);
+            padding: 2.25rem;
+            color: #e0eafc;
+            animation: fadeInLeft 0.9s cubic-bezier(.39,.575,.565,1) both;
+        }
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(0, 230, 230, 0.12);
+            color: #8cf7f7;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero-panel h1 {
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        .hero-panel p {
+            color: rgba(224, 234, 252, 0.86);
+            line-height: 1.7;
+            max-width: 38rem;
+            margin-bottom: 0;
+        }
+        .workflow-card {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            animation: fadeInUp 1s cubic-bezier(.39,.575,.565,1) both;
+        }
+        .workflow-card-header {
+            padding: 1.5rem 1.5rem 0;
+        }
+        .thumb-mark {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 1rem;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(0, 168, 204, 0.85));
+            color: #0a1830;
+            font-size: 2rem;
+            font-weight: 800;
+            box-shadow: 0 0 0 8px rgba(0, 230, 230, 0.14), 0 0 32px rgba(0, 230, 230, 0.5);
+            animation: pulse 2.4s infinite;
+        }
+        .workflow-card h2 {
+            color: #ffffff;
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.5rem;
+        }
+        .workflow-card .subtitle {
+            color: rgba(224, 234, 252, 0.8);
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            color: #e0eafc;
+            font-weight: 600;
+            margin-bottom: 0.45rem;
+        }
+        .form-control {
+            background: rgba(10, 24, 48, 0.28);
+            border: 1px solid rgba(0, 230, 230, 0.45);
+            color: #ffffff;
+            border-radius: 0.8rem;
+            padding: 0.8rem 1rem;
+            box-shadow: none;
+        }
+        .form-control::placeholder {
+            color: rgba(224, 234, 252, 0.6);
+        }
+        .form-control:focus {
+            background: rgba(10, 24, 48, 0.38);
+            color: #ffffff;
+            border-color: #00e6e6;
+            box-shadow: 0 0 0 0.22rem rgba(0, 230, 230, 0.18);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #0077b6 0%, #00a8cc 100%);
+            border: none;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            border-radius: 0.8rem;
+            padding: 0.85rem 1rem;
+            box-shadow: 0 10px 24px rgba(0, 119, 182, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-primary:hover,
+        .btn-primary:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(0, 119, 182, 0.36);
+        }
+        .btn-outline-light {
+            border-radius: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        #result {
+            color: #e0eafc;
+            min-height: 1.5rem;
+        }
+        #loading {
+            color: #e0eafc;
+        }
+        .summary-box {
+            background: rgba(7, 17, 31, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 1rem;
+            padding: 1rem;
+            overflow: hidden;
+        }
+        .summary-box code {
+            color: #8cf7f7;
+        }
+        .result-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(2, 8, 18, 0.82);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+        }
+        .result-overlay.is-visible {
+            display: flex;
+        }
+        .result-card {
+            width: min(100%, 620px);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(10, 24, 48, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+            color: #e0eafc;
+        }
+        .result-card .match-score {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #8cf7f7;
+            line-height: 1;
+            max-width: 100%;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .result-card .label {
+            color: rgba(224, 234, 252, 0.72);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .result-card .value {
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .matched-face-preview {
+            width: 100%;
+            max-width: 180px;
+            aspect-ratio: 1 / 1;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .matched-face-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-28px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @media (max-width: 767.98px) {
+            .hero-panel,
+            .workflow-card {
+                border-radius: 1.2rem;
+            }
+            .hero-panel {
+                padding: 1.5rem;
+            }
+            .workflow-card-header,
+            .workflow-card .card-body {
+                padding-left: 1.1rem !important;
+                padding-right: 1.1rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell container-fluid px-0">
+        <div class="row g-0 align-items-center min-vh-100">
+            <div class="col-lg-6 px-3 px-md-5 py-5">
+                <div class="hero-panel">
+                    <div class="hero-kicker">Thumb Verification Flow</div>
+                    <h1>Verify a thumb impression against the stored records.</h1>
+                    <p>
+                        Use the connected scanner to capture a thumb impression and compare it with the enrolled biometric data in a clean forensic workflow.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-6 px-3 px-md-5 pb-5 pb-lg-0">
+                <div class="workflow-card mx-auto" style="max-width: 520px;">
+                    <div class="workflow-card-header text-center">
+                        <div class="thumb-mark">V</div>
+                        <h2>Thumb Verification</h2>
+                        <div class="subtitle">Scan a thumb impression and review the verification result.</div>
+                    </div>
+                    <div class="card-body px-4 px-md-5 pb-4 pt-0">
+                        <form id="verifyThumbForm" class="d-grid gap-3">
+                            <div class="summary-box">
+                                <div class="fw-semibold text-white mb-1">Verification mode</div>
+                                <div class="text-light">Upload a fingerprint image from the scanner or capture source, then compare it against the enrolled records.</div>
+                            </div>
+                            <div>
+                                <label for="verifyFingerprint" class="form-label">Fingerprint image</label>
+                                <input type="file" class="form-control" id="verifyFingerprint" name="fingerprint" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Verify Thumb</button>
+                        </form>
+                        <div id="result" class="mt-4 text-center"></div>
+                        <div id="loading" class="text-center mt-3" style="display:none;">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">Verifying thumb, please wait...</div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <a href="/" class="btn btn-outline-light">Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultOverlay" class="result-overlay" aria-hidden="true">
+        <div class="result-card">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <div class="hero-kicker mb-2">Verification result</div>
+                    <h3 class="h4 mb-1 text-white" id="overlayTitle">Thumb match found</h3>
+                    <div class="text-light" id="overlayMessage">Matched record details are shown below.</div>
+                </div>
+                <button type="button" class="btn btn-outline-light btn-sm" id="closeOverlayBtn">Close</button>
+            </div>
+            <div class="row g-3 align-items-stretch">
+                <div class="col-md-4">
+                    <div class="summary-box h-100 text-center d-flex flex-column justify-content-center">
+                        <div class="label mb-2">Matching score</div>
+                        <div class="match-score" id="overlayScore">0.00</div>
+                        <div class="text-light mt-2 small">Higher score means a closer biometric match.</div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="summary-box h-100 text-start" id="overlayPerson"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const resultOverlay = document.getElementById('resultOverlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayMessage = document.getElementById('overlayMessage');
+    const overlayScore = document.getElementById('overlayScore');
+    const overlayPerson = document.getElementById('overlayPerson');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+    const overlayScoreBaseFontSize = 48;
+
+    function fitOverlayScore() {
+        if (!overlayScore) {
+            return;
+        }
+
+        const card = overlayScore.closest('.summary-box');
+        if (!card) {
+            return;
+        }
+
+        const maxFontSize = overlayScoreBaseFontSize;
+        const minFontSize = 20;
+        const availableWidth = card.clientWidth - 8;
+        const availableHeight = card.clientHeight - 8;
+
+        overlayScore.style.fontSize = `${maxFontSize}px`;
+
+        while (
+            overlayScore.scrollWidth > availableWidth ||
+            overlayScore.scrollHeight > availableHeight
+        ) {
+            const currentSize = parseFloat(window.getComputedStyle(overlayScore).fontSize) || maxFontSize;
+            if (currentSize <= minFontSize) {
+                break;
+            }
+            overlayScore.style.fontSize = `${currentSize - 1}px`;
+        }
+    }
+
+    function closeResultOverlay() {
+        resultOverlay.classList.remove('is-visible');
+        resultOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    closeOverlayBtn.addEventListener('click', closeResultOverlay);
+    resultOverlay.addEventListener('click', function (event) {
+        if (event.target === resultOverlay) {
+            closeResultOverlay();
+        }
+    });
+
+    async function verifyFingerprint() {
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+        const fingerprintField = document.getElementById('verifyFingerprint');
+        const fingerprintFile = fingerprintField.files[0];
+
+        resultDiv.innerHTML = '';
+
+        if (!fingerprintFile) {
+            resultDiv.innerHTML = `
+                <div class="summary-box text-start">
+                    <div class="fw-semibold text-warning mb-1">Choose a fingerprint image first.</div>
+                    <div class="text-light">The verification endpoint expects a file in the <code>fingerprint</code> field.</div>
+                </div>
+            `;
+            return;
+        }
+
+        loadingDiv.style.display = 'block';
+
+        const formData = new FormData();
+        formData.append('fingerprint', fingerprintFile);
+
+        try {
+            const response = await fetch('/verify_fingerprint', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.match) {
+                resultDiv.innerHTML = `
+                    <div class="summary-box text-start">
+                        <div class="fw-semibold text-warning mb-1">${data.message || 'No matching fingerprint found.'}</div>
+                        <div class="text-light">Try a clearer scan or verify against another enrolled impression.</div>
+                    </div>
+                `;
+                closeResultOverlay();
+                return;
+            }
+
+            const person = data.person || {};
+            const scoreText = Number(data.score || 0).toFixed(4);
+
+            overlayTitle.textContent = data.message || 'Thumb match found';
+            overlayMessage.textContent = 'Matched record details are shown below.';
+            overlayScore.textContent = scoreText;
+            overlayPerson.innerHTML = `
+                <div class="fw-semibold text-white mb-3">Matched person</div>
+                <div class="row g-3 align-items-center">
+                    <div class="col-sm-4 col-md-4">
+                        <div class="matched-face-preview mx-auto">
+                            ${person.photo_url ? `<img src="${person.photo_url}" alt="${person.name || data.name || 'Matched person'}">` : `<div class="w-100 h-100 d-flex align-items-center justify-content-center text-light small p-3">No face image available</div>`}
+                        </div>
+                    </div>
+                    <div class="col-sm-8 col-md-8">
+                        <div class="row g-2">
+                            <div class="col-sm-6"><div class="label">Person ID</div><div class="value">${person.person_id ?? data.person_id ?? 'N/A'}</div></div>
+                            <div class="col-sm-6"><div class="label">Name</div><div class="value">${person.name || data.name || 'N/A'}</div></div>
+                            <div class="col-sm-6"><div class="label">Age</div><div class="value">${person.age ?? 'N/A'}</div></div>
+                            <div class="col-sm-6"><div class="label">Gender</div><div class="value">${person.gender || 'N/A'}</div></div>
+                            <div class="col-12"><div class="label">Address</div><div class="value">${person.address || 'N/A'}</div></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultOverlay.classList.add('is-visible');
+            resultOverlay.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(fitOverlayScore);
+            resultDiv.innerHTML = `<div class="summary-box text-start"><div class="fw-semibold text-success mb-1">${data.message || 'Fingerprint matched successfully.'}</div><div class="text-light">The matched record is displayed on screen.</div></div>`;
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="summary-box text-start">
+                    <div class="fw-semibold text-danger mb-1">Error processing request.</div>
+                    <div class="text-light">The verification endpoint could not be reached.</div>
+                </div>
+            `;
+            closeResultOverlay();
+        } finally {
+            loadingDiv.style.display = 'none';
+        }
+    }
+
+    const verifyThumbForm = document.getElementById('verifyThumbForm');
+    verifyThumbForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        verifyFingerprint();
+    });
+
+    window.addEventListener('resize', fitOverlayScore);
+    </script>
+</body>
+</html>

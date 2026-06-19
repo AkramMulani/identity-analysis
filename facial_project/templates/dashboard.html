@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: url('/static/compare-bg2.jpg') center center/cover no-repeat fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at top left, rgba(0, 230, 230, 0.12), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(33, 136, 56, 0.10), transparent 28%),
+                rgba(10, 24, 48, 0.84);
+            z-index: 0;
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+
+        .nav-shell,
+        .panel,
+        .metric-card,
+        .quick-card,
+        .activity-card {
+            background: rgba(10, 24, 48, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.4rem;
+        }
+
+        .nav-shell {
+            padding: 1rem 1.25rem;
+            color: #fff;
+            margin-bottom: 1.25rem;
+        }
+
+        .brand-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(0, 230, 230, 0.12);
+            color: #8cf7f7;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.74rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #e0eafc;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.55rem 0.8rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .panel {
+            padding: 1.5rem;
+            color: #fff;
+            height: 100%;
+        }
+
+        .metric-card,
+        .quick-card,
+        .activity-card {
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .metric-label,
+        .section-label {
+            color: rgba(255, 255, 255, 0.64);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .metric-value {
+            margin-top: 0.35rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .metric-subtext,
+        .panel p,
+        .activity-card p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .quick-card a,
+        .quick-card .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .badge-soft {
+            background: rgba(0, 230, 230, 0.12);
+            color: #8cf7f7;
+            border: 1px solid rgba(0, 230, 230, 0.16);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(67, 192, 109, 0.14);
+            color: #b7ffd0;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .placeholder-box {
+            min-height: 100px;
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.14);
+        }
+
+        @media (max-width: 767.98px) {
+            .page-shell {
+                padding: 1rem;
+            }
+
+            .nav-shell,
+            .panel {
+                border-radius: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell container-fluid">
+        <div class="nav-shell">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="brand-kicker">Forensic identity hub</div>
+                    <h1 class="h3 mb-1 fw-bold">Dashboard</h1>
+                    <div class="text-light">Welcome{% if current_admin and current_admin.display_name %}, {{ current_admin.display_name }}{% endif %}.</div>
+                </div>
+                <div class="nav-links">
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/register">Add Person</a>
+                    <a href="/compare">Identity Verification</a>
+                    <a href="/settings">Settings</a>
+                    <a href="/logout">Logout</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-label">Total Persons</div>
+                    <div class="metric-value">{{ stats.persons }}</div>
+                    <div class="metric-subtext">Stored identities in the person registry.</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-label">Total Photos</div>
+                    <div class="metric-value">{{ stats.photos }}</div>
+                    <div class="metric-subtext">Registered face images available for matching.</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-label">Total Fingerprints</div>
+                    <div class="metric-value">{{ stats.fingerprints }}</div>
+                    <div class="metric-subtext">Stored fingerprint templates and records.</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-label">Admin Users</div>
+                    <div class="metric-value">{{ admin_total }}</div>
+                    <div class="metric-subtext">Users with access to person management.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-lg-7">
+                <div class="panel">
+                    <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+                        <div>
+                            <div class="section-label">Quick Actions</div>
+                            <h2 class="h4 mb-0 fw-bold">Person management and verification</h2>
+                        </div>
+                        <span class="status-pill">Admin access enabled</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="quick-card">
+                                <div class="badge-soft badge mb-2">Person Management</div>
+                                <a href="/persons">Manage Persons <span>→</span></a>
+                                <p class="mb-0 mt-2">Open the person registry to create, view, and update records.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="quick-card">
+                                <div class="badge-soft badge mb-2">Identity Verification</div>
+                                <a href="/compare">Verify Identity <span>→</span></a>
+                                <p class="mb-0 mt-2">Use the public comparison workflow to review matches.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="quick-card">
+                                <div class="badge-soft badge mb-2">Fingerprint Enrollment</div>
+                                <a href="/register_thumb">Add Fingerprint <span>→</span></a>
+                                <p class="mb-0 mt-2">Attach fingerprint data to an existing person record.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="quick-card">
+                                <div class="badge-soft badge mb-2">Fingerprint Review</div>
+                                <a href="/compare_thumb">Verify Fingerprint <span>→</span></a>
+                                <p class="mb-0 mt-2">Review fingerprint verification against stored templates.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="panel">
+                    <div class="section-label mb-2">Recent Activity</div>
+                    <h2 class="h4 fw-bold mb-3">Latest person records</h2>
+                    {% if recent_persons %}
+                        <div class="d-grid gap-3">
+                            {% for person in recent_persons %}
+                                <div class="activity-card">
+                                    <div class="d-flex justify-content-between align-items-start gap-3">
+                                        <div>
+                                            <div class="fw-bold">{{ person.name }}</div>
+                                            <div class="text-light small">Age: {{ person.age or 'N/A' }} | Gender: {{ person.gender or 'N/A' }}</div>
+                                        </div>
+                                        <span class="badge badge-soft">ID {{ person.id }}</span>
+                                    </div>
+                                    <p class="mb-0 mt-2 small">Address: {{ person.address or 'N/A' }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="placeholder-box d-flex align-items-center justify-content-center text-light p-3">
+                            Recent activity will appear here after new registrations.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+insightface
+onnxruntime
+opencv-python
+numpy
+fpdf2
+tqdm
+pytest
+Flask
+annoy
+requests

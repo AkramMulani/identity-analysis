@@ -1,0 +1,4 @@
+.github
+.venv
+_pycache_/
+backend/_pycache_/
