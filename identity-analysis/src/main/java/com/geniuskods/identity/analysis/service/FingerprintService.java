@@ -50,7 +50,7 @@ public class FingerprintService {
                         .match(candidate);
 
         boolean matched =
-                score >= 40;
+                score >= 10;
 
         return new VerifyResponse(
                 score,

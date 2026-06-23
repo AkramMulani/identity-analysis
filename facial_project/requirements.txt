@@ -8,3 +8,4 @@ pytest
 Flask
 annoy
 requests
+openpyxl
