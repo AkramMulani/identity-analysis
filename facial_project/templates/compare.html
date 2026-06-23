@@ -259,18 +259,32 @@
                           enctype="multipart/form-data">
 
                         <div class="mb-3">
-
                             <label class="form-label">
-                                Upload Photo
+                                Capture from camera
                             </label>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-light btn-sm" id="photoCameraBtn">Capture from Camera</button>
+                                <span class="text-light small" id="photoCameraLabel">No image selected</span>
+                            </div>
+                            <input
+                                class="form-control d-none"
+                                type="file"
+                                id="photoCamera"
+                                name="camera_image"
+                                accept="image/*"
+                                capture="environment">
+                        </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Choose from storage
+                            </label>
                             <input
                                 class="form-control"
                                 type="file"
-                                id="photo"
-                                name="photo"
-                                required>
-
+                                id="photoStorage"
+                                name="image"
+                                accept="image/*">
                         </div>
 
                         <button
@@ -322,6 +336,16 @@
 
     </div>
 
+</div>
+<div id="cameraModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75" style="z-index: 1050;">
+    <div class="position-relative bg-dark rounded p-3 m-4 mx-auto" style="max-width: 720px;">
+        <button type="button" id="cameraCloseBtn" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" aria-label="Close"></button>
+        <video id="cameraVideo" autoplay playsinline class="w-100 rounded"></video>
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <button type="button" id="cameraCaptureBtn" class="btn btn-success">Capture</button>
+            <button type="button" id="cameraCancelBtn" class="btn btn-outline-light">Cancel</button>
+        </div>
+    </div>
 </div>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

@@ -21,6 +21,57 @@ Path('photos').mkdir(parents=True, exist_ok=True)
 Path('data').mkdir(parents=True, exist_ok=True)
 
 
+def collect_uploaded_files(request_files, *field_names):
+    collected = []
+    for field_name in field_names:
+        for file_storage in request_files.getlist(field_name):
+            if file_storage and file_storage.filename:
+                collected.append(file_storage)
+        if not collected:
+            single_file = request_files.get(field_name)
+            if single_file and single_file.filename:
+                collected.append(single_file)
+    return collected
+
+
+def ratio_similarity(r1, r2):
+    """Compute similarity between two ratio dicts (simple inverse L1 distance, normalized)."""
+    if not r1 or not r2:
+        return 0.0
+    keys = set(r1.keys()) & set(r2.keys())
+    if not keys:
+        return 0.0
+    dists = [abs(r1[k] - r2[k]) for k in keys]
+    mean_dist = sum(dists) / len(dists) if dists else 1.0
+    return 1.0 / (1.0 + mean_dist)
+
+
+def find_best_face_match(query_emb, query_ratios, threshold=0.4):
+    candidates = db.get_all_embeddings(DB_PATH)
+    if not candidates:
+        return None
+
+    best_match = None
+    for emb_id, person_id, photo_id, db_emb, db_ratios in candidates:
+        emb_sim = cmp.cosine_similarity(query_emb, db_emb)
+        ratio_sim = ratio_similarity(query_ratios, db_ratios)
+        combined_score = 0.7 * emb_sim + 0.3 * ratio_sim
+        if combined_score >= threshold and (best_match is None or combined_score > best_match['score']):
+            person = db.get_person_by_id(DB_PATH, person_id)
+            best_match = {
+                'person_id': person_id,
+                'name': person.get('name') if person else 'Unknown',
+                'age': person.get('age') if person else '',
+                'gender': person.get('gender') if person else '',
+                'address': person.get('address') if person else '',
+                'score': combined_score,
+                'embedding_score': emb_sim,
+                'ratio_score': ratio_sim,
+                'photo_url': get_primary_face_photo_url(person_id),
+            }
+    return best_match
+
+
 def ensure_db():
     db.init_db(DB_PATH)
 
@@ -192,10 +243,7 @@ def update_person_page(person_id):
 
     db.update_person(DB_PATH, person_id, name, int(age) if age else None, gender, address, notes)
 
-    image_files = request.files.getlist('image')
-    if not image_files:
-        single_image = request.files.get('image')
-        image_files = [single_image] if single_image else []
+    image_files = collect_uploaded_files(request.files, 'image', 'camera_image', 'image_file')
     image_files = [image for image in image_files if image and image.filename]
 
     if image_files:
@@ -315,11 +363,7 @@ def add_person():
     age = request.form.get('age')
     gender = request.form.get('gender')
     address = request.form.get('address')
-    image_files = request.files.getlist('image')
-    if not image_files:
-        single_image = request.files.get('image')
-        image_files = [single_image] if single_image else []
-
+    image_files = collect_uploaded_files(request.files, 'image', 'camera_image', 'image_file')
     image_files = [image for image in image_files if image and image.filename]
     if not image_files:
         return jsonify({'error': 'at least one image file required'}), 400
@@ -331,34 +375,87 @@ def add_person():
             return jsonify({'error': 'unauthorized'}), 401
 
     db.init_db(DB_PATH)
-    person_id = db.add_person(DB_PATH, name, int(age) if age else None, gender, address, None)
-
-    photo_ids = []
-    embedding_ids = []
-    saved_paths = []
 
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("add_person_api")
 
-    for image in image_files:
-        filename = Path(image.filename).name
-        out_path = os.path.join('photos', f"{person_id}_{len(saved_paths) + 1}_{filename}")
-        image.save(out_path)
-        saved_paths.append(out_path)
-        photo_id = db.add_photo(DB_PATH, person_id, out_path)
-        photo_ids.append(photo_id)
+    temp_paths = []
+    try:
+        Path('temp').mkdir(parents=True, exist_ok=True)
+        for image in image_files:
+            suffix = Path(image.filename or 'face.jpg').suffix or '.jpg'
+            temp_file = tempfile.NamedTemporaryFile(delete=False, dir='temp', suffix=suffix)
+            temp_path = temp_file.name
+            temp_file.close()
+            image.save(temp_path)
+            temp_paths.append(temp_path)
 
-        faces = embedder.extract_embeddings(out_path)
-        logger.info(f"Extracted {len(faces)} faces from {out_path}")
-        for idx, (emb, bbox, ratios) in enumerate(faces):
-            logger.info(f"Face {idx+1} embedding: {emb[:5] if emb is not None else 'None'} bbox: {bbox} ratios: {ratios}")
-            eid = db.add_embedding(DB_PATH, person_id, photo_id, emb, ratios, model=('insightface' if emb is not None else 'fallback'))
-            embedding_ids.append(eid)
+            faces = embedder.extract_embeddings(temp_path)
+            logger.info(f"Extracted {len(faces)} faces from {temp_path}")
+            if not faces:
+                for temp_path_to_remove in temp_paths:
+                    try:
+                        os.remove(temp_path_to_remove)
+                    except OSError:
+                        pass
+                return jsonify({'error': 'No face detected in uploaded image'}), 400
 
-    logger.info(f"Photo IDs stored: {photo_ids}")
-    logger.info(f"Embedding IDs stored: {embedding_ids}")
-    return jsonify({'person_id': person_id, 'photo_ids': photo_ids, 'embedding_ids': embedding_ids, 'photo_count': len(photo_ids)})
+            for idx, (emb, bbox, ratios) in enumerate(faces):
+                logger.info(f"Face {idx+1} embedding: {emb[:5] if emb is not None else 'None'} bbox: {bbox} ratios: {ratios}")
+                if emb is None:
+                    continue
+                match = find_best_face_match(emb, ratios, threshold=0.4)
+                if match:
+                    for temp_path_to_remove in temp_paths:
+                        try:
+                            os.remove(temp_path_to_remove)
+                        except OSError:
+                            pass
+                    return jsonify({
+                        'error': 'A person with a matching face already exists',
+                        'message': f"Face already exists for {match['name']}",
+                        'matched_person': match,
+                    }), 409
+
+        person_id = db.add_person(DB_PATH, name, int(age) if age else None, gender, address, None)
+        photo_ids = []
+        embedding_ids = []
+        saved_paths = []
+
+        for index, image in enumerate(image_files, start=1):
+            filename = Path(image.filename).name
+            out_path = os.path.join('photos', f"{person_id}_{index}_{filename}")
+            image.save(out_path)
+            saved_paths.append(out_path)
+            photo_id = db.add_photo(DB_PATH, person_id, out_path)
+            photo_ids.append(photo_id)
+
+            faces = embedder.extract_embeddings(out_path)
+            logger.info(f"Extracted {len(faces)} faces from {out_path}")
+            for idx, (emb, bbox, ratios) in enumerate(faces):
+                logger.info(f"Face {idx+1} embedding: {emb[:5] if emb is not None else 'None'} bbox: {bbox} ratios: {ratios}")
+                if emb is None:
+                    continue
+                eid = db.add_embedding(DB_PATH, person_id, photo_id, emb, ratios, model=('insightface' if emb is not None else 'fallback'))
+                embedding_ids.append(eid)
+
+        for temp_path_to_remove in temp_paths:
+            try:
+                os.remove(temp_path_to_remove)
+            except OSError:
+                pass
+
+        logger.info(f"Photo IDs stored: {photo_ids}")
+        logger.info(f"Embedding IDs stored: {embedding_ids}")
+        return jsonify({'person_id': person_id, 'photo_ids': photo_ids, 'embedding_ids': embedding_ids, 'photo_count': len(photo_ids)})
+    except Exception as exc:
+        for temp_path_to_remove in temp_paths:
+            try:
+                os.remove(temp_path_to_remove)
+            except OSError:
+                pass
+        return jsonify({'error': f'Unable to register person: {exc}'}), 500
 
 
 @app.route('/compare', methods=['POST'])
@@ -367,11 +464,12 @@ def compare_endpoint():
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("compare_api")
 
-    if 'image' not in request.files:
+    image_files = collect_uploaded_files(request.files, 'image', 'camera_image', 'image_file')
+    if not image_files:
         logger.error("No image file in request")
         return jsonify({'error': 'image file required'}), 400
-    image = request.files['image']
-    topk = int(request.form.get('topk', 5))
+    image = image_files[0]
+    topk = min(max(1, int(request.form.get('topk', 1))), 1)
     threshold = float(request.form.get('threshold', 0.4))
 
     # save temporary query image

@@ -283,8 +283,16 @@
                             <input class="form-control" type="text" id="personAddress" name="address" placeholder="Enter address">
                         </div>
                         <div class="mb-3">
-                            <label for="personPhoto" class="form-label">Photo</label>
-                            <input class="form-control" type="file" id="personPhoto" name="image" required>
+                            <label for="personPhotoCamera" class="form-label">Capture photo from camera</label>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="personPhotoCameraBtn">Capture from Camera</button>
+                                <span class="text-secondary small" id="personPhotoCameraLabel">No image selected</span>
+                            </div>
+                            <input class="form-control d-none" type="file" id="personPhotoCamera" name="camera_image" accept="image/*" capture="environment">
+                        </div>
+                        <div class="mb-3">
+                            <label for="personPhotoStorage" class="form-label">Choose photo from storage</label>
+                            <input class="form-control" type="file" id="personPhotoStorage" name="image" accept="image/*">
                         </div>
                         <button type="submit" class="btn btn-success w-100 mt-2">Add Person</button>
                     </form>
@@ -305,6 +313,16 @@
         </div>
     </div>
 
+    <div id="cameraModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75" style="z-index:1050;">
+        <div class="position-relative bg-dark rounded p-3 m-4 mx-auto" style="max-width: 720px;">
+            <button type="button" id="cameraCloseBtn" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" aria-label="Close"></button>
+            <video id="cameraVideo" autoplay playsinline class="w-100 rounded"></video>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <button type="button" id="cameraCaptureBtn" class="btn btn-success">Capture</button>
+                <button type="button" id="cameraCancelBtn" class="btn btn-outline-light">Cancel</button>
+            </div>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='register.js') }}"></script>
 </body>
 </html>

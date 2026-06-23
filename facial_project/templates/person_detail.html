@@ -138,8 +138,16 @@
                             <textarea class="form-control" name="notes" rows="3">{{ person.notes or '' }}</textarea>
                         </div>
                         <div>
-                            <label class="form-label">Add more face images</label>
-                            <input type="file" class="form-control" name="image" accept="image/*" multiple>
+                            <label class="form-label">Add more face images from camera</label>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-light btn-sm" id="detailCameraBtn">Capture from Camera</button>
+                                <span class="text-muted-light small" id="detailCameraLabel">No image selected</span>
+                            </div>
+                            <input type="file" class="form-control d-none" id="detailCameraInput" name="camera_image" accept="image/*" capture="environment">
+                        </div>
+                        <div>
+                            <label class="form-label">Add more face images from storage</label>
+                            <input type="file" class="form-control" name="image" accept="image/*">
                         </div>
                         <div>
                             <label class="form-label">Add more fingerprint images</label>
@@ -188,5 +196,81 @@
             </div>
         </div>
     </div>
+    <div id="cameraModal" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75" style="z-index:1050;">
+        <div class="position-relative bg-dark rounded p-3 m-4 mx-auto" style="max-width: 720px;">
+            <button type="button" id="cameraCloseBtn" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" aria-label="Close"></button>
+            <video id="cameraVideo" autoplay playsinline class="w-100 rounded"></video>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <button type="button" id="cameraCaptureBtn" class="btn btn-success">Capture</button>
+                <button type="button" id="cameraCancelBtn" class="btn btn-outline-light">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const button = document.getElementById('detailCameraBtn');
+            const input = document.getElementById('detailCameraInput');
+            const label = document.getElementById('detailCameraLabel');
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideo');
+            const captureBtn = document.getElementById('cameraCaptureBtn');
+            const cancelBtn = document.getElementById('cameraCancelBtn');
+            const closeBtn = document.getElementById('cameraCloseBtn');
+            let stream = null;
+
+            function stopStream() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+            }
+
+            function hideModal() {
+                stopStream();
+                modal.classList.add('d-none');
+            }
+
+            if (button && input) {
+                button.addEventListener('click', async function () {
+                    try {
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            input.click();
+                            return;
+                        }
+                        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                        video.srcObject = stream;
+                        modal.classList.remove('d-none');
+                    } catch (err) {
+                        input.click();
+                    }
+                });
+
+                captureBtn.addEventListener('click', function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth || 640;
+                    canvas.height = video.videoHeight || 480;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(function (blob) {
+                        if (!blob) {
+                            hideModal();
+                            return;
+                        }
+                        const file = new File([blob], 'captured-image.jpg', { type: 'image/jpeg' });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        input.files = dataTransfer.files;
+                        if (label) {
+                            label.textContent = file.name;
+                        }
+                        hideModal();
+                    }, 'image/jpeg');
+                });
+
+                cancelBtn.addEventListener('click', hideModal);
+                closeBtn.addEventListener('click', hideModal);
+            }
+        });
+    </script>
 </body>
 </html>
